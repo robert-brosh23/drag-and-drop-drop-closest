@@ -24,10 +24,11 @@ The name of the drag action that's set up in the project settings InputMap. For 
 
 ---
 
-`dragging_speed` (float, default: 50.0)
+`dragging_speed` (float, default: 25.0)
 
 Controls the speed at which the draggable node moves towards the cursor or towards the drop zone when dropped or returning.
-
+Differences in values between (1..25) are more noticeable.
+A maximum of 50 is allowed for when one wants to stick the draggable to the cursor.
 ---
 
 `drag_z_index` (int, default: 1000)

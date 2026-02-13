@@ -19,7 +19,9 @@ enum DRAGGABLE_STATE {IDLE, DRAGGING, DROPPING, RETURNING, AUTO_MOVING}
 
 @export_group("Behavior")
 ## Controls the speed at which the draggable node moves towards the cursor or towards the drop zone when dropped or returning.
-@export_range(1.0, 100.0, 1.0) var dragging_speed: float = 50.0
+## Differences in values between (1..25) are more noticeable.
+## A maximum of 50 is allowed for when one wants to stick the draggable to the cursor
+@export_range(1.0, 50.0, 1.0) var dragging_speed: float = 25.0
 ## Z_Index dragged area will take. It is recommended to not
 ## set it to maximum as z_index is additive for children if 
 ## z_as_relative is set and they also have to be outside of the defined range
@@ -37,6 +39,8 @@ var previous_parent = null
 var next_position := Vector2.ZERO
 
 var a: Area2D = null
+
+const CLOSE_ENOUGH_THRESHOLD = .5;
 
 signal drag_started(area: Area2D)
 signal drag_ended(area: Area2D, drop_spot: SnappingSpot)
@@ -79,21 +83,20 @@ func _process(delta):
 			_handle_auto_moving(delta)
 
 func _handle_dragging(delta: float) -> void:
-	_move_toward(a.get_global_mouse_position(), delta)
+	a.global_position = _move_toward(a.global_position, a.get_global_mouse_position(), delta)
 
 func _handle_dropping(delta: float) -> void:
-	_move_toward(next_position, delta)
-	
-	# TODO: Find a better way of "arriving" to the next_position
-	if a.global_position.distance_to(next_position) <= 2.0:
+	a.global_position = _move_toward(a.global_position, next_position, delta)
+
+	if a.global_position.distance_squared_to(next_position) <= CLOSE_ENOUGH_THRESHOLD:
 		previous_position = next_position
 		a.global_position = next_position
 		_change_state_to(DRAGGABLE_STATE.IDLE)
 
 func _handle_returning(delta: float) -> void:
-	_move_toward(previous_position, delta)
+	a.global_position = _move_toward(a.global_position, previous_position, delta)
 	
-	if a.global_position.distance_to(previous_position) <= 2.0:
+	if a.global_position.distance_squared_to(next_position) <= CLOSE_ENOUGH_THRESHOLD:
 		a.global_position = previous_position
 		
 		if previous_parent and a.get_parent() != previous_parent:
@@ -101,15 +104,18 @@ func _handle_returning(delta: float) -> void:
 		_change_state_to(DRAGGABLE_STATE.IDLE)
 
 func _handle_auto_moving(delta: float) -> void:
-	_move_toward(next_position, delta)
+	a.global_position = _move_toward(a.global_position, next_position, delta)
 	
-	if a.global_position.distance_to(next_position) <= 2.0:
+	if a.global_position.distance_squared_to(next_position) <= CLOSE_ENOUGH_THRESHOLD:
 		previous_position = next_position
 		a.global_position = next_position
 		_change_state_to(DRAGGABLE_STATE.IDLE)
-		
-func _move_toward(target: Vector2, delta: float) -> void:
-	a.global_position = lerp(a.global_position, target, delta * dragging_speed)
+
+func _exp_decay(from: Vector2, to: Vector2, decay: float, delta: float) -> Vector2:
+	return to + (from - to) * exp(-decay * delta)
+
+func _move_toward(from: Vector2, to: Vector2, delta: float) -> Vector2:
+	return _exp_decay(from, to, dragging_speed, delta)
 
 #endregion
 
