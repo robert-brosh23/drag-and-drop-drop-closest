@@ -24,6 +24,18 @@ The name of the drag action that's set up in the project settings InputMap. For 
 
 ---
 
+`drag_layer_parent` (Node, default: null)
+
+Node the draggable's area temporarily re-parents to while in DRAGGING state.
+The area shouldn't be an ancestor of this node. If unset, will use the tree root.
+
+_Hint_: 
+If the scene root is the Area2D, either assign `drag_layer_parent` at runtime once the game tree is available or
+transform the scene so that the root has the area as a child, 
+allowing the `drag_layer_parent` can be attached to something other than the area. 
+
+---
+
 `dragging_speed` (float, default: 25.0)
 
 Controls the speed at which the draggable node moves towards the cursor or towards the drop zone when dropped or returning.

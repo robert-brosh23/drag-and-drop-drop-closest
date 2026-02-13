@@ -32,6 +32,18 @@ A maximum of 50 is allowed for when one wants to stick the draggable to the curs
 
 ---
 
+`drag_layer_parent` (Node, default: null)
+
+Node the draggable's area temporarily re-parents to while in DRAGGING state.
+The area shouldn't be an ancestor of this node. If unset, will use the tree root.
+
+_Hint_: 
+If the scene root is the Area2D, either assign `drag_layer_parent` at runtime once the game tree is available or
+transform the scene so that the root has the area as a child, 
+allowing the `drag_layer_parent` can be attached to something other than the area. 
+
+---
+
 `drag_z_index` (int, default: 1000)
 
 Controls the z-index of the draggable node while it is being dragged. This ensures that the draggable appears above other nodes during the drag operation.
