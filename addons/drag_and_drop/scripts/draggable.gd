@@ -17,7 +17,7 @@ enum DRAGGABLE_STATE {IDLE, DRAGGING, DROPPING, RETURNING, AUTO_MOVING}
 		drag_input_name = value
 		update_configuration_warnings()
 ## Node the draggable's area temporarily re-parents to while in DRAGGING state.
-## The area shouldn't be an ancestor of this node. 
+## The area shouldn't be an ancestor of this node. If unset, will use the tree root.
 ## [br][br]
 ## [i]Hint[/i]: 
 ## If the scene root is the Area2D, either assign [code]drag_layer_parent[/code] at runtime once the game tree is available or
