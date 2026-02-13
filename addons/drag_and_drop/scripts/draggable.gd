@@ -16,6 +16,14 @@ enum DRAGGABLE_STATE {IDLE, DRAGGING, DROPPING, RETURNING, AUTO_MOVING}
 	set(value):
 		drag_input_name = value
 		update_configuration_warnings()
+## Node the draggable's area temporarily re-parents to while in DRAGGING state.
+## The area shouldn't be an ancestor of this node. 
+## [br][br]
+## [i]Hint[/i]: 
+## If the scene root is the Area2D, either assign [code]drag_layer_parent[/code] at runtime once the game tree is available or
+## transform the scene so that the root has the area as a child, 
+## allowing the [code]drag_layer_parent[/code] can be attached to something other than the area. 
+@export var drag_layer_parent: Node = null
 
 @export_group("Behavior")
 ## Controls the speed at which the draggable node moves towards the cursor or towards the drop zone when dropped or returning.
@@ -125,7 +133,11 @@ func _on_input_event(_viewport, event, _shape_idx):
 	if event.is_action_pressed(drag_input_name) and state == DRAGGABLE_STATE.IDLE:
 		previous_position = a.global_position
 		previous_parent = a.get_parent()
-		a.reparent(get_tree().root)
+		if drag_layer_parent:
+			assert(not a.is_ancestor_of(drag_layer_parent), "Drag Layer Parent cannot be a descendant of the draggable's Area2D, this would create a reparenting loop.")
+			a.reparent(drag_layer_parent)
+		else:
+			a.reparent(get_tree().root)
 		
 		_change_state_to(DRAGGABLE_STATE.DRAGGING)
 		drag_started.emit(a)
@@ -193,4 +205,11 @@ func _get_configuration_warnings() -> PackedStringArray:
 		warnings.append("Selected Area2D is not an ancestor of this Draggable; prefer parent/grandparent to avoid cross-branch issues")
 	if area_reference == null and not (get_parent() is Area2D) and not (owner is Area2D):
 		warnings.append("No Area2D found via export, parent, or owner; Draggable requires an Area2D")
+		
+	var check_a = area_reference #if area_reference else (get_parent() if get_parent() is Area2D else owner)
+	if not check_a:
+		var parent = get_parent()
+		check_a = parent if parent is Area2D else owner
+	if check_a and drag_layer_parent and check_a.is_ancestor_of(drag_layer_parent):
+		warnings.append("Drag Layer Parent cannot be a descendant of the draggable's Area2D, this would create a reparenting loop.")
 	return warnings
