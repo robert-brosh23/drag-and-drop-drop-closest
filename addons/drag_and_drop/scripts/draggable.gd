@@ -145,7 +145,7 @@ func _on_input_event(_viewport, event, _shape_idx):
 func _input(event):
 	if event.is_action_released(drag_input_name) and state == DRAGGABLE_STATE.DRAGGING:
 		var overlapping_areas = a.get_overlapping_areas()
-		var dropzone: DropZone = _is_over_dropzone(overlapping_areas)
+		var dropzone: DropZone = _get_closest_dropzone(overlapping_areas, a)
 		
 		var drop_spot: SnappingSpot = null
 		if dropzone:
@@ -183,15 +183,31 @@ func _change_state_to(new_state: DRAGGABLE_STATE) -> void:
 			a.z_index = initial_z_index
 	state_changed.emit(a, state)
 
-func _is_over_dropzone(areas: Array[Area2D]) -> DropZone:
+func _get_closest_dropzone(areas: Array[Area2D], curr_area: Area2D) -> DropZone:
 	if not areas:
 		return null
+	
+	var closest_zone: DropZone = null
+	var best_dist := INF
+	
 	for area in areas:
+		var zone: DropZone = null
 		for child in area.get_children():
 			if child is DropZone:
-				return child
-	return null
-	
+				zone = child
+				break
+
+		if zone == null:
+			continue
+		
+		var dist := curr_area.global_position.distance_to(area.global_position)
+		
+		if dist < best_dist:
+			best_dist = dist
+			closest_zone = zone
+
+	return closest_zone
+
 #endregion
 
 func _get_configuration_warnings() -> PackedStringArray:
